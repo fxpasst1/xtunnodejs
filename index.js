@@ -2,6 +2,8 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const WS_PORT=8005
+
 //xtunargotest.frpnas.tk:443
 // ================= 1. 用户变量配置区 =================
 const USER_VARS = {
@@ -25,7 +27,7 @@ const CONFIG = {
         xtunnel: {
             bin: './x-tunnel-linux',
             url: (arch) => `https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-${arch}`,
-            args: ['-l', 'ws://127.0.0.1:20007', '-token', 'fxpass']
+            args: ['-l', 'ws://127.0.0.1:${WS_PORT}', '-token', 'fxpass']
         },
         cloudflared: {
             bin: './cloudflared-linux',
@@ -41,7 +43,7 @@ const CONFIG = {
         }
     },
     
-    monitorPort: 20007,
+    monitorPort: WS_PORT,
     rebootInterval: 8 * 60 * 60 * 1000 // 8小时自动刷新
 };
 
