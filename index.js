@@ -27,7 +27,7 @@ const CONFIG = {
         xtunnel: {
             bin: './x-tunnel-linux',
             url: (arch) => `https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-${arch}`,
-            args: ['-l', 'ws://127.0.0.1:${WS_PORT}', '-token', 'fxpass']
+            args: ['-l', 'ws://127.0.0.1:8005', '-token', 'fxpass']
         },
         cloudflared: {
             bin: './cloudflared-linux',
@@ -43,7 +43,7 @@ const CONFIG = {
         }
     },
     
-    monitorPort: WS_PORT,
+    monitorPort: 8005,
     rebootInterval: 8 * 60 * 60 * 1000 // 8小时自动刷新
 };
 
