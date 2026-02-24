@@ -2,11 +2,11 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const WS_PORT=8005
-
-//xtunargotest.frpnas.tk:443
 // ================= 1. 用户变量配置区 =================
 const USER_VARS = {
+    // 统一端口设置
+    wsPort: 8005, 
+
     // Komari Agent 配置 (请确保域名带上 http:// 或 https://)
     komariEndpoint: 'https://komari.mygcp.tk', 
     komariToken: 'Q2gTdIOfrQz00t8T',      
@@ -27,7 +27,8 @@ const CONFIG = {
         xtunnel: {
             bin: './x-tunnel-linux',
             url: (arch) => `https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-${arch}`,
-            args: ['-l', 'ws://127.0.0.1:8005', '-token', 'fxpass']
+            // 使用模板字符串动态注入端口
+            args: ['-l', `ws://127.0.0.1:${USER_VARS.wsPort}`, '-token', 'fxpass']
         },
         cloudflared: {
             bin: './cloudflared-linux',
@@ -35,15 +36,13 @@ const CONFIG = {
             args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.cfToken]
         },
         komari: {
-            bin: './komari-agent', // 统一命名为 komari-agent
-            // 修正后的下载路径：必须包含 agent 字样
+            bin: './komari-agent', 
             url: (arch) => `https://github.com/komari-monitor/komari-agent/releases/latest/download/komari-agent-linux-${arch}`,
-            // 修正后的启动参数：使用 -e 指定服务端地址
             args: ['-e', USER_VARS.komariEndpoint, '-t', USER_VARS.komariToken]
         }
     },
     
-    monitorPort: 8005,
+    monitorPort: USER_VARS.wsPort, // 同步更新监控端口
     rebootInterval: 8 * 60 * 60 * 1000 // 8小时自动刷新
 };
 
@@ -69,7 +68,6 @@ async function downloadFile(url, dest) {
             }
             const buffer = Buffer.from(await res.arrayBuffer());
             
-            // 确保下载的不是 404 页面或损坏文件
             if (buffer.length < 5000) throw new Error('下载文件体积异常，可能非二进制程序');
             
             fs.writeFileSync(dest, buffer);
@@ -128,15 +126,14 @@ function stopAll() {
 
 async function main() {
     console.log('--- 🛡️ XtunArgo 运维系统 V2.1  ---');
+    console.log(`[📌 配置] 当前服务端口定位于: ${USER_VARS.wsPort}`);
     await ensureBinaries();
 
-    // 顺序启动
     const keys = Object.keys(CONFIG.services);
     for (let i = 0; i < keys.length; i++) {
         setTimeout(() => startService(keys[i]), i * 3000);
     }
     
-    // 8 小时强制重启任务
     setInterval(stopAll, CONFIG.rebootInterval);
 }
 
