@@ -9,16 +9,16 @@ const crypto = require('crypto');
 const USER_VARS = {
     UUID: process.env.UUID || null, 
     XRAY_PATH: process.env.XRAY_PATH || "/vless",
-    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "fxpass", 
-    ARGO_TOKEN: process.env.ARGO_TOKEN || "eyJhIjoiZGRmMDQyNTdiMmRlMTkyNDMyOGZhMDI1ODcwYWYxMmEiLCJ0IjoiM2FjYTMyMmItZGI1Ny00Nzg3LTk4OWEtMTRjODdhNDkzMDBmIiwicyI6Ik1ERm1OVFkxWVRNdE1qSmxaUzAwTURnNUxUa3dORFF0WXpNeU1URTNOakJqTVdZMiJ9",
-    ARGO_DOMAIN: process.env.ARGO_DOMAIN || "katat6.frpnas.tk",
+    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "", 
+    CF_TOKEN: process.env.CF_TOKEN || "",
+    CF_DOMAIN: process.env.CF_DOMAIN || "",
 
     XRAY_PORT: process.env.XRAY_PORT || 8401,     
     XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
     WEB_PORT: parseInt(process.env.PORT || process.env.WEB_PORT || 20359), 
     
     KOMARI_ENDPOINT: process.env.KOMARI_ENDPOINT || 'https://komari.mygcp.tk',
-    KOMARI_TOKEN: process.env.KOMARI_TOKEN || 'DWSRgBhwwWE0I6BE',
+    KOMARI_TOKEN: process.env.KOMARI_TOKEN || '',
 
     MAX_RESTARTS: 5,           // 最大连续失败重启次数
     SUCCESS_RESET_MS: 30000,    // 成功运行判定时间 (30秒)
@@ -162,7 +162,7 @@ const CONFIG = {
         cloudflared: {
             bin: path.join(WORK_DIR, 'cloudflared'),
             url: `https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}`,
-            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.ARGO_TOKEN]
+            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.CF_TOKEN]
         },
         komari: {
             bin: path.join(WORK_DIR, 'komari-agent'),
@@ -208,7 +208,7 @@ async function main() {
         outbounds: [{ protocol: "freedom" }]
     };
     fs.writeFileSync(XRAY_CONFIG_FILE, JSON.stringify(xrayConfig, null, 2));
-    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.ARGO_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
+    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.CF_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
 
     // 下载
     for (const key in CONFIG.services) {
