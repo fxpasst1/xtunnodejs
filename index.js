@@ -9,16 +9,19 @@ const crypto = require('crypto');
 const USER_VARS = {
     UUID: process.env.UUID || null, 
     XRAY_PATH: process.env.XRAY_PATH || "/vless",
-    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "", 
-    CF_TOKEN: process.env.CF_TOKEN || "",
-    CF_DOMAIN: process.env.CF_DOMAIN || "",
+    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "fxpass", 
+    CF_TOKEN: process.env.CF_TOKEN || "eyJhIjoiZGRmMDQyNTdiMmRlMTkyNDMyOGZhMDI1ODcwYWYxMmEiLCJ0IjoiM2FjYTMyMmItZGI1Ny00Nzg3LTk4OWEtMTRjODdhNDkzMDBmIiwicyI6Ik1ERm1OVFkxWVRNdE1qSmxaUzAwTURnNUxUa3dORFF0WXpNeU1URTNOakJqTVdZMiJ9",
+    CF_DOMAIN: process.env.CF_DOMAIN || "katat6.frpnas.tk",
+    
+    // 【新增】自定义订阅路径，例如设置为 "/mysecretnode"
+    SUB_PATH: process.env.SUB_PATH || "/sub",
 
     XRAY_PORT: process.env.XRAY_PORT || 8401,     
     XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
     WEB_PORT: parseInt(process.env.PORT || process.env.WEB_PORT || 20359), 
     
     KOMARI_ENDPOINT: process.env.KOMARI_ENDPOINT || 'https://komari.mygcp.tk',
-    KOMARI_TOKEN: process.env.KOMARI_TOKEN || '',
+    KOMARI_TOKEN: process.env.KOMARI_TOKEN || 'DWSRgBhwwWE0I6BE',
 
     MAX_RESTARTS: 5,           
     SUCCESS_RESET_MS: 30000,   
@@ -103,54 +106,50 @@ function startService(key) {
 
 const HTML_STYLE = `
 <style>
-    body { background: #0a0a0a; color: #00ff41; font-family: 'Segoe UI', 'Courier New', monospace; padding: 20px; line-height: 1.6; }
-    .nav { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; font-size: 1.2em; font-weight: bold; }
-    .log-container { background: #000; padding: 15px; border-radius: 5px; border: 1px solid #222; overflow-y: auto; height: 75vh; white-space: pre-wrap; font-size: 0.9em; }
-    .sub-card { background: #111; padding: 40px; border-radius: 12px; border: 1px solid #00ff41; max-width: 700px; margin: 40px auto; box-shadow: 0 0 20px rgba(0,255,65,0.1); }
-    .code-box { background: #000; color: #ffcc00; padding: 15px; word-break: break-all; border-radius: 5px; border: 1px dashed #444; margin: 20px 0; font-family: monospace; }
-    .copy-btn { background: #00ff41; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-    .copy-btn:hover { background: #00cc33; }
-    .footer { font-size: 11px; color: #444; margin-top: 30px; text-align: center; letter-spacing: 1px; }
+    body { background: #0a0a0a; color: #00ff41; font-family: 'Segoe UI', monospace; padding: 20px; line-height: 1.6; }
+    .nav { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; font-size: 1.1em; }
+    .log-container { background: #000; padding: 15px; border-radius: 5px; border: 1px solid #222; overflow-y: auto; height: 75vh; white-space: pre-wrap; font-size: 0.85em; color: #00ff41; }
+    .sub-card { background: #111; padding: 40px; border-radius: 12px; border: 1px solid #00ff41; max-width: 650px; margin: 40px auto; box-shadow: 0 0 20px rgba(0,255,65,0.05); }
+    .code-box { background: #000; color: #ffcc00; padding: 15px; word-break: break-all; border-radius: 5px; border: 1px dashed #444; margin: 20px 0; font-family: 'Courier New', monospace; font-size: 0.9em; }
+    .copy-btn { background: #00ff41; color: #000; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+    .copy-btn:hover { background: #00cc33; transform: translateY(-1px); }
+    .footer { font-size: 11px; color: #333; margin-top: 30px; text-align: center; }
 </style>
 `;
 
 function renderLogPage() {
     const logsContent = runningLogs.slice().reverse().join('\n');
     return `
-    <html><head><title>System Status</title>${HTML_STYLE}<meta http-equiv="refresh" content="5"></head>
+    <html><head><title>System Node Monitor</title>${HTML_STYLE}<meta http-equiv="refresh" content="5"></head>
     <body>
-        <div class="nav"><span>SYSTEM_MONITOR_V2.1</span></div>
-        <pre class="log-container">${logsContent || 'Initializing logs...'}</pre>
-        <div class="footer">DASHBOARD CORE | SECURE ENVIRONMENT</div>
+        <div class="nav"><span>[ 实时系统监控流 ]</span></div>
+        <pre class="log-container">${logsContent || 'Waiting for process output...'}</pre>
+        <div class="footer">DASHBOARD V2.2 | AUTH_MODE: STEALTH</div>
     </body></html>`;
 }
 
 function renderSubPage() {
     return `
-    <html><head><title>Subscription</title>${HTML_STYLE}</head>
+    <html><head><title>Node Config</title>${HTML_STYLE}</head>
     <body>
         <div class="sub-card">
-            <h2 style="color:#00ff41; margin-top:0;">节点信息</h2>
-            <div style="font-size:0.9em; color:#888;">Protocol: VLESS | Transport: WS</div>
+            <h2 style="color:#00ff41; margin-top:0;">节点配置信息</h2>
+            <div style="font-size:0.9em; color:#888; margin-bottom:10px;">Argo Tunnel + Xray WS</div>
             <div class="code-box" id="vlessLink">${VLESS_LINK}</div>
             <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()">复制 VLESS 链接</button>
-            <div id="tip" style="text-align:center; margin-top:10px; font-size:12px; color:#555;"></div>
         </div>
         <script>
             function copyToClipboard() {
                 const text = document.getElementById('vlessLink').innerText;
+                const btn = document.getElementById('copyBtn');
                 navigator.clipboard.writeText(text).then(() => {
-                    const btn = document.getElementById('copyBtn');
-                    const tip = document.getElementById('tip');
-                    btn.innerText = '已成功复制到剪贴板';
+                    btn.innerText = '✓ 已成功复制';
                     btn.style.background = '#fff';
                     setTimeout(() => {
                         btn.innerText = '复制 VLESS 链接';
                         btn.style.background = '#00ff41';
                     }, 2000);
-                }).catch(err => {
-                    alert('复制失败，请手动选择复制');
-                });
+                }).catch(() => alert('请手动选择文本进行复制'));
             }
         </script>
     </body></html>`;
@@ -159,7 +158,6 @@ function renderSubPage() {
 // ================= 4. 主程序入口 =================
 
 const CONFIG = {
-    // 移除了 github 代理镜像，直接访问
     services: {
         xray: {
             bin: path.join(WORK_DIR, 'xray'),
@@ -191,7 +189,7 @@ async function downloadFile(url, dest, isZip = false) {
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
     try {
         const res = await fetch(url, { headers: { 'User-Agent': ua } });
-        if (!res.ok) throw new Error(`Status ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buffer = Buffer.from(await res.arrayBuffer());
         if (isZip) {
             const zipPath = dest + ".zip";
@@ -203,7 +201,7 @@ async function downloadFile(url, dest, isZip = false) {
         fs.chmodSync(dest, 0o755);
         return true;
     } catch (e) {
-        addLog(`[下载错误] ${url} 失败: ${e.message}`);
+        addLog(`[下载失败] ${key}: ${e.message}`);
         return false;
     }
 }
@@ -221,27 +219,28 @@ async function main() {
     };
     fs.writeFileSync(XRAY_CONFIG_FILE, JSON.stringify(xrayConfig, null, 2));
     
-    // 节点链接生成
     VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.CF_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
 
     for (const key in CONFIG.services) {
         if (!fs.existsSync(CONFIG.services[key].bin)) {
-            addLog(`[系统] 正在直接从 GitHub 下载: ${key}...`);
+            addLog(`[系统] 正在初始化组件: ${key}...`);
             await downloadFile(CONFIG.services[key].url, CONFIG.services[key].bin, CONFIG.services[key].isZip);
         }
     }
 
+    // ================= HTTP 路由逻辑 =================
     http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        // 只有手动输入 /sub 路径才能看到节点信息
-        if (req.url === '/sub') {
+        
+        // 模糊匹配：只要访问路径包含 SUB_PATH，就显示订阅信息
+        if (req.url.includes(USER_VARS.SUB_PATH)) {
             res.end(renderSubPage());
         } else {
             res.end(renderLogPage());
         }
     }).listen(USER_VARS.WEB_PORT, '0.0.0.0');
 
-    addLog(`[系统] 监控面板已在端口 ${USER_VARS.WEB_PORT} 就绪`);
+    addLog(`[系统] 监控就绪。秘密路径: ${USER_VARS.SUB_PATH}`);
 
     Object.keys(CONFIG.services).forEach((key, i) => {
         setTimeout(() => startService(key), i * 1500);
