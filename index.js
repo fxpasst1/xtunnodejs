@@ -10,8 +10,8 @@ const USER_VARS = {
     UUID: process.env.UUID || null, 
     XRAY_PATH: process.env.XRAY_PATH || "/vless",
     XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "", 
-    ARGO_TOKEN: process.env.ARGO_TOKEN || "",
-    ARGO_DOMAIN: process.env.ARGO_DOMAIN || "",
+    CF_TOKEN: process.env.CF_TOKEN || "",
+    CF_DOMAIN: process.env.CF_DOMAIN || "",
 
     XRAY_PORT: process.env.XRAY_PORT || 8401,     
     XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
@@ -175,7 +175,7 @@ const CONFIG = {
         cloudflared: {
             bin: path.join(WORK_DIR, 'cloudflared'),
             url: `https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}`,
-            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.ARGO_TOKEN]
+            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.CF_TOKEN]
         },
         komari: {
             bin: path.join(WORK_DIR, 'komari-agent'),
@@ -222,7 +222,7 @@ async function main() {
     fs.writeFileSync(XRAY_CONFIG_FILE, JSON.stringify(xrayConfig, null, 2));
     
     // 节点链接生成
-    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.ARGO_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
+    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.CF_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
 
     for (const key in CONFIG.services) {
         if (!fs.existsSync(CONFIG.services[key].bin)) {
