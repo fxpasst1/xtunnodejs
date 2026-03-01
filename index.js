@@ -13,8 +13,8 @@ const USER_VARS = {
     ARGO_TOKEN: process.env.ARGO_TOKEN || "eyJhIjoiZGRmMDQyNTdiMmRlMTkyNDMyOGZhMDI1ODcwYWYxMmEiLCJ0IjoiM2FjYTMyMmItZGI1Ny00Nzg3LTk4OWEtMTRjODdhNDkzMDBmIiwicyI6Ik1ERm1OVFkxWVRNdE1qSmxaUzAwTURnNUxUa3dORFF0WXpNeU1URTNOakJqTVdZMiJ9",
     ARGO_DOMAIN: process.env.ARGO_DOMAIN || "katat6.frpnas.tk",
 
-    XRAY_PORT: 8401,     
-    XTUNNEL_PORT: 8405,   
+    XRAY_PORT: process.env.XRAY_PORT || 8401,     
+    XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
     WEB_PORT: parseInt(process.env.PORT || process.env.WEB_PORT || 20359), 
     
     KOMARI_ENDPOINT: process.env.KOMARI_ENDPOINT || 'https://komari.mygcp.tk',
