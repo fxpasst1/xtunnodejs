@@ -9,19 +9,18 @@ const crypto = require('crypto');
 const USER_VARS = {
     UUID: process.env.UUID || null, 
     XRAY_PATH: process.env.XRAY_PATH || "/vless",
-    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "fxpass", 
-    CF_TOKEN: process.env.CF_TOKEN || "eyJhIjoiZGRmMDQyNTdiMmRlMTkyNDMyOGZhMDI1ODcwYWYxMmEiLCJ0IjoiM2FjYTMyMmItZGI1Ny00Nzg3LTk4OWEtMTRjODdhNDkzMDBmIiwicyI6Ik1ERm1OVFkxWVRNdE1qSmxaUzAwTURnNUxUa3dORFF0WXpNeU1URTNOakJqTVdZMiJ9",
-    CF_DOMAIN: process.env.CF_DOMAIN || "katat6.frpnas.tk",
+    XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "", 
+    CF_TOKEN: process.env.CF_TOKEN || "",
+    CF_DOMAIN: process.env.CF_DOMAIN || "",
     
-    // 【新增】自定义订阅路径，例如设置为 "/mysecretnode"
     SUB_PATH: process.env.SUB_PATH || "/sub",
 
     XRAY_PORT: process.env.XRAY_PORT || 8401,     
     XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
-    WEB_PORT: parseInt(process.env.PORT || process.env.WEB_PORT || 20359), 
+    WEB_PORT: parseInt(process.env.PORT || process.env.WEB_PORT || 80), 
     
     KOMARI_ENDPOINT: process.env.KOMARI_ENDPOINT || 'https://komari.mygcp.tk',
-    KOMARI_TOKEN: process.env.KOMARI_TOKEN || 'DWSRgBhwwWE0I6BE',
+    KOMARI_TOKEN: process.env.KOMARI_TOKEN || '',
 
     MAX_RESTARTS: 5,           
     SUCCESS_RESET_MS: 30000,   
