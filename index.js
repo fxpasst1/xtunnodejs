@@ -5,13 +5,13 @@ const http = require('http');
 const os = require('os');
 const crypto = require('crypto');
 
-// ================= 1. 用户参数与阈值配置 =================
+// ================= 1. 用户参数与配置 =================
 const USER_VARS = {
     UUID: process.env.UUID || null, 
     XRAY_PATH: process.env.XRAY_PATH || "/vless",
     XTUNNEL_TOKEN: process.env.XTUNNEL_TOKEN || "", 
-    CF_TOKEN: process.env.CF_TOKEN || "",
-    CF_DOMAIN: process.env.CF_DOMAIN || "",
+    ARGO_TOKEN: process.env.ARGO_TOKEN || "",
+    ARGO_DOMAIN: process.env.ARGO_DOMAIN || "",
 
     XRAY_PORT: process.env.XRAY_PORT || 8401,     
     XTUNNEL_PORT: process.env.XTUNNEL_PORT || 8405,   
@@ -20,14 +20,14 @@ const USER_VARS = {
     KOMARI_ENDPOINT: process.env.KOMARI_ENDPOINT || 'https://komari.mygcp.tk',
     KOMARI_TOKEN: process.env.KOMARI_TOKEN || '',
 
-    MAX_RESTARTS: 5,           // 最大连续失败重启次数
-    SUCCESS_RESET_MS: 30000,    // 成功运行判定时间 (30秒)
-    MAX_LOG_LINES: 100         // 网页显示的日志最大行数
+    MAX_RESTARTS: 5,           
+    SUCCESS_RESET_MS: 30000,   
+    MAX_LOG_LINES: 100         
 };
 
 let ACTIVE_UUID = "";
 let VLESS_LINK = "";
-let runningLogs = []; // 日志缓冲区
+let runningLogs = []; 
 
 const restartTracker = {
     xray: { count: 0, resetTimer: null },
@@ -45,11 +45,10 @@ const XRAY_CONFIG_FILE = path.join(WORK_DIR, 'xray_config.json');
 const ARCH = os.arch() === 'x64' ? 'amd64' : (os.arch() === 'arm64' ? 'arm64' : 'amd64');
 const X_ARCH = os.arch() === 'x64' ? '64' : 'arm64-v8a';
 
-// 添加日志到缓冲区
 function addLog(msg) {
     const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
     const formattedMsg = `[${time}] ${msg}`;
-    console.log(formattedMsg); // 同时在终端打印
+    console.log(formattedMsg);
     runningLogs.push(formattedMsg);
     if (runningLogs.length > USER_VARS.MAX_LOG_LINES) runningLogs.shift();
 }
@@ -77,16 +76,15 @@ function startService(key) {
 
     addLog(`[启动] ${key} (尝试 #${tracker.count + 1})`);
     
-    // 使用 pipe 捕获日志，以便显示在网页
     const proc = spawn(item.bin, item.args, { cwd: WORK_DIR });
     INSTANCES[key] = proc;
 
     proc.stdout.on('data', d => addLog(`[${key}] ${d.toString().trim()}`));
-    proc.stderr.on('data', d => addLog(`[${key} 错误] ${d.toString().trim()}`));
+    proc.stderr.on('data', d => addLog(`[${key}] ${d.toString().trim()}`));
 
     tracker.resetTimer = setTimeout(() => {
         if (tracker.count > 0) {
-            addLog(`[状态] ${key} 已稳定运行，重置失败计数。`);
+            addLog(`[状态] ${key} 已稳定运行。`);
             tracker.count = 0;
         }
     }, USER_VARS.SUCCESS_RESET_MS);
@@ -96,7 +94,7 @@ function startService(key) {
         clearTimeout(tracker.resetTimer);
         tracker.count++;
         const delay = 5000 * tracker.count;
-        addLog(`[警告] ${key} 退出 (码: ${code})，将在 ${delay/1000}s 后重启...`);
+        addLog(`[警告] ${key} 退出，将在 ${delay/1000}s 后重启...`);
         setTimeout(() => startService(key), delay);
     });
 }
@@ -105,26 +103,25 @@ function startService(key) {
 
 const HTML_STYLE = `
 <style>
-    body { background: #0e0e0e; color: #00ff41; font-family: 'Courier New', monospace; padding: 20px; line-height: 1.5; }
-    .nav { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
-    .nav a { color: #00ff41; text-decoration: none; margin-right: 20px; font-weight: bold; }
-    .nav a:hover { text-decoration: underline; }
-    .log-container { background: #000; padding: 15px; border-radius: 5px; border: 1px solid #222; overflow-y: auto; height: 70vh; }
-    .sub-card { background: #1a1a1a; padding: 30px; border-radius: 10px; border: 1px solid #00ff41; max-width: 800px; margin: auto; }
-    .code-box { background: #000; color: #ffcc00; padding: 15px; word-break: break-all; border-radius: 5px; border: 1px dashed #444; margin: 15px 0; }
-    .footer { font-size: 12px; color: #666; margin-top: 20px; text-align: center; }
+    body { background: #0a0a0a; color: #00ff41; font-family: 'Segoe UI', 'Courier New', monospace; padding: 20px; line-height: 1.6; }
+    .nav { margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1a1a1a; font-size: 1.2em; font-weight: bold; }
+    .log-container { background: #000; padding: 15px; border-radius: 5px; border: 1px solid #222; overflow-y: auto; height: 75vh; white-space: pre-wrap; font-size: 0.9em; }
+    .sub-card { background: #111; padding: 40px; border-radius: 12px; border: 1px solid #00ff41; max-width: 700px; margin: 40px auto; box-shadow: 0 0 20px rgba(0,255,65,0.1); }
+    .code-box { background: #000; color: #ffcc00; padding: 15px; word-break: break-all; border-radius: 5px; border: 1px dashed #444; margin: 20px 0; font-family: monospace; }
+    .copy-btn { background: #00ff41; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+    .copy-btn:hover { background: #00cc33; }
+    .footer { font-size: 11px; color: #444; margin-top: 30px; text-align: center; letter-spacing: 1px; }
 </style>
 `;
 
 function renderLogPage() {
-    const logsContent = runningLogs.slice().reverse().join('\n'); // 最新日志在最上面
+    const logsContent = runningLogs.slice().reverse().join('\n');
     return `
-    <html><head><title>System Logs</title>${HTML_STYLE}<meta http-equiv="refresh" content="5"></head>
+    <html><head><title>System Status</title>${HTML_STYLE}<meta http-equiv="refresh" content="5"></head>
     <body>
-        <div class="nav"><a href="/">[ 实时日志 ]</a> <a href="/sub">[ 节点信息 ]</a></div>
-        <h3>系统运行监控 (每5秒自动刷新)</h3>
-        <pre class="log-container">${logsContent || '等待日志生成...'}</pre>
-        <div class="footer">Argo All-in-One Dashboard v2.0</div>
+        <div class="nav"><span>SYSTEM_MONITOR_V2.1</span></div>
+        <pre class="log-container">${logsContent || 'Initializing logs...'}</pre>
+        <div class="footer">DASHBOARD CORE | SECURE ENVIRONMENT</div>
     </body></html>`;
 }
 
@@ -132,21 +129,37 @@ function renderSubPage() {
     return `
     <html><head><title>Subscription</title>${HTML_STYLE}</head>
     <body>
-        <div class="nav"><a href="/">[ 实时日志 ]</a> <a href="/sub">[ 节点信息 ]</a></div>
         <div class="sub-card">
-            <h2 style="color:#00ff41; margin-top:0;">VLESS 订阅信息</h2>
-            <p>UUID: <span style="color:#fff;">${ACTIVE_UUID}</span></p>
-            <p>传输协议: <span style="color:#fff;">WebSocket (WS)</span></p>
-            <div class="code-box">${VLESS_LINK}</div>
-            <p style="font-size:13px; color:#888;">提示: 如果连接失败，请检查 Cloudflare Tunnel 是否已将流量转发至 8401 端口。</p>
+            <h2 style="color:#00ff41; margin-top:0;">节点信息</h2>
+            <div style="font-size:0.9em; color:#888;">Protocol: VLESS | Transport: WS</div>
+            <div class="code-box" id="vlessLink">${VLESS_LINK}</div>
+            <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()">复制 VLESS 链接</button>
+            <div id="tip" style="text-align:center; margin-top:10px; font-size:12px; color:#555;"></div>
         </div>
+        <script>
+            function copyToClipboard() {
+                const text = document.getElementById('vlessLink').innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    const tip = document.getElementById('tip');
+                    btn.innerText = '已成功复制到剪贴板';
+                    btn.style.background = '#fff';
+                    setTimeout(() => {
+                        btn.innerText = '复制 VLESS 链接';
+                        btn.style.background = '#00ff41';
+                    }, 2000);
+                }).catch(err => {
+                    alert('复制失败，请手动选择复制');
+                });
+            }
+        </script>
     </body></html>`;
 }
 
 // ================= 4. 主程序入口 =================
 
 const CONFIG = {
-    mirrors: ['', 'https://mirror.ghproxy.com/', 'https://ghfast.top/'],
+    // 移除了 github 代理镜像，直接访问
     services: {
         xray: {
             bin: path.join(WORK_DIR, 'xray'),
@@ -162,7 +175,7 @@ const CONFIG = {
         cloudflared: {
             bin: path.join(WORK_DIR, 'cloudflared'),
             url: `https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${ARCH}`,
-            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.CF_TOKEN]
+            args: ['tunnel', '--no-autoupdate', '--edge-ip-version', '4', '--protocol', 'http2', 'run', '--token', USER_VARS.ARGO_TOKEN]
         },
         komari: {
             bin: path.join(WORK_DIR, 'komari-agent'),
@@ -176,29 +189,28 @@ const INSTANCES = {};
 
 async function downloadFile(url, dest, isZip = false) {
     const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-    for (const mirror of CONFIG.mirrors) {
-        try {
-            const res = await fetch(mirror + url, { headers: { 'User-Agent': ua } });
-            if (!res.ok) continue;
-            const buffer = Buffer.from(await res.arrayBuffer());
-            if (isZip) {
-                const zipPath = dest + ".zip";
-                fs.writeFileSync(zipPath, buffer);
-                execSync(`unzip -o "${zipPath}" -d "${WORK_DIR}" && rm "${zipPath}"`);
-            } else {
-                fs.writeFileSync(dest, buffer);
-            }
-            fs.chmodSync(dest, 0o755);
-            return true;
-        } catch (e) { }
+    try {
+        const res = await fetch(url, { headers: { 'User-Agent': ua } });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const buffer = Buffer.from(await res.arrayBuffer());
+        if (isZip) {
+            const zipPath = dest + ".zip";
+            fs.writeFileSync(zipPath, buffer);
+            execSync(`unzip -o "${zipPath}" -d "${WORK_DIR}" && rm "${zipPath}"`);
+        } else {
+            fs.writeFileSync(dest, buffer);
+        }
+        fs.chmodSync(dest, 0o755);
+        return true;
+    } catch (e) {
+        addLog(`[下载错误] ${url} 失败: ${e.message}`);
+        return false;
     }
-    return false;
 }
 
 async function main() {
     initUUID();
     
-    // 生成配置
     const xrayConfig = {
         inbounds: [{
             port: USER_VARS.XRAY_PORT, listen: "127.0.0.1", protocol: "vless",
@@ -208,19 +220,20 @@ async function main() {
         outbounds: [{ protocol: "freedom" }]
     };
     fs.writeFileSync(XRAY_CONFIG_FILE, JSON.stringify(xrayConfig, null, 2));
-    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.CF_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
+    
+    // 节点链接生成
+    VLESS_LINK = `vless://${ACTIVE_UUID}@www.visa.com.sg:443?encryption=none&security=tls&type=ws&host=${USER_VARS.ARGO_DOMAIN}&path=${USER_VARS.XRAY_PATH}#Argo_Node`;
 
-    // 下载
     for (const key in CONFIG.services) {
         if (!fs.existsSync(CONFIG.services[key].bin)) {
-            addLog(`[系统] 正在下载组件: ${key}...`);
+            addLog(`[系统] 正在直接从 GitHub 下载: ${key}...`);
             await downloadFile(CONFIG.services[key].url, CONFIG.services[key].bin, CONFIG.services[key].isZip);
         }
     }
 
-    // 路由分发的 HTTP 服务
     http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        // 只有手动输入 /sub 路径才能看到节点信息
         if (req.url === '/sub') {
             res.end(renderSubPage());
         } else {
@@ -228,9 +241,8 @@ async function main() {
         }
     }).listen(USER_VARS.WEB_PORT, '0.0.0.0');
 
-    addLog(`[系统] Web 服务已在端口 ${USER_VARS.WEB_PORT} 启动`);
+    addLog(`[系统] 监控面板已在端口 ${USER_VARS.WEB_PORT} 就绪`);
 
-    // 顺序启动
     Object.keys(CONFIG.services).forEach((key, i) => {
         setTimeout(() => startService(key), i * 1500);
     });
